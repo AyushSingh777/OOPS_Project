@@ -1,8 +1,8 @@
-
+import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-class InstagramLogin():
+class InstagramLogin(object):
     def __init__(self, username, password):
         self.username = username
         self.password = password
@@ -19,41 +19,30 @@ class InstagramLogin():
         self.driver.find_element(By.XPATH, "//button[contains(text(),'Not Now')]").click()
 
 
-def login():
-    return 0
-
 class InstagramVerify(InstagramLogin):
     def verify_login(self):
         expected = self.driver.find_element(By.XPATH, "//a[contains(text(),'honeypratap')]").text
-        print(expected)
+        return expected
 
     def element(self):
         try:
             self.driver.find_element(By.NAME,"username").click()
         except:
-            print("Invalid xpath")
+            return "Invalid xpath"
 
-if __name__ == '__main__':
+@pytest.fixture(scope="module")
+def setup_module(request):
+    login = InstagramVerify('honeypratap', 'Gujjar@77')
+    login.login()
+    def teardown_module():
+        login.driver.close()
+    request.addfinalizer(teardown_module)
+    return login
 
-    while True:
-        print("Enter 1 for login")
-        print("Enter 2 for login verify")
-        print("Enter 3 for check")
-        print("Enter 4 to exit")
-        userchoice = int(input())
-        if userchoice == 1:
-            login = InstagramVerify('honeypratap', 'Gujjar@77')
-            login.login()
-        elif userchoice ==2:
-            login.verify_login()
-        elif userchoice == 3:
-            login.element()
-        elif userchoice == 4:
-            quit()
+def test_verify_login(setup_module):
+    expected = setup_module.verify_login()
+    assert expected == "honeypratap", f"Expected {expected} to be honeypratap"
 
-
-
-
-
-
-
+def test_element(setup_module):
+    expected = setup_module.element()
+    assert expected == "Invalid xpath", f"Expected {expected} to be Invalid xpath"
